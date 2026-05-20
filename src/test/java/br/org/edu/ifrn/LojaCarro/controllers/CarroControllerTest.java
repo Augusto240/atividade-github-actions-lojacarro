@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Sql(scripts = "classpath:seed.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Transactional
+
 class CarroControllerTest {
 
     @Autowired
@@ -51,8 +54,8 @@ class CarroControllerTest {
                 .andExpect(jsonPath("$.ano").value(2020));
 
         List<Carro> carros = carroRepository.findAll();
-        assertEquals(1, carros.size());
-        assertEquals("Gol", carros.get(0).getModelo());
+        assertEquals(3, carros.size());
+        assertEquals("Gol", carros.get(2).getModelo());
     }
 
     @Test
