@@ -1,39 +1,17 @@
-package br.org.edu.ifrn.LojaCarro.model;
+package br.org.edu.ifrn.LojaCarro.dto;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "carro")
-public class Carro {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 255)
+public class CarroRequest {
     private String marca;
-
-    @Column(nullable = false, length = 255)
     private String modelo;
-
-    @Column(nullable = false)
     private int ano;
 
-    public Carro() {
+    public CarroRequest() {
     }
 
-    public Carro(String marca, String modelo, int ano) {
+    public CarroRequest(String marca, String modelo, int ano) {
         this.marca = marca;
         this.modelo = modelo;
         this.ano = ano;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getMarca() {
@@ -60,3 +38,4 @@ public class Carro {
         this.ano = ano;
     }
 }
+

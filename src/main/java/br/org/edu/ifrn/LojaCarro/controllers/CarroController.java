@@ -1,55 +1,78 @@
-
 package br.org.edu.ifrn.LojaCarro.controllers;
 
+import br.org.edu.ifrn.LojaCarro.dto.CarroRequest;
+import br.org.edu.ifrn.LojaCarro.dto.CarroResponse;
 import br.org.edu.ifrn.LojaCarro.model.Carro;
+import br.org.edu.ifrn.LojaCarro.model.User;
 import br.org.edu.ifrn.LojaCarro.services.CarroService;
+import br.org.edu.ifrn.LojaCarro.security.RoleBasedAccessService;
+import br.org.edu.ifrn.LojaCarro.security.AuthenticationContextUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/carro")
+@RequestMapping({"/carro", "/veiculos"})
 public class CarroController {
 
     @Autowired
     private CarroService carroService;
 
-    // Salvar carro (corrigido para POST)
-    @PostMapping("salvar")
-    public ResponseEntity<Carro> salvarCarro(@RequestBody Carro c) {
-        Carro savedCarro = carroService.save(c);
-        return ResponseEntity.ok(savedCarro);
+    @Autowired
+    private RoleBasedAccessService roleBasedAccessService;
+
+    @Autowired
+    private AuthenticationContextUtil authUtil;
+
+    @PostMapping({"", "/salvar"})
+    public ResponseEntity<CarroResponse> salvarCarro(@RequestBody CarroRequest request, HttpServletRequest httpRequest) {
+        User loggedUser = authUtil.getLoggedUser(httpRequest);
+        roleBasedAccessService.checkGerenteOnly(loggedUser.getRole());
+
+        Carro carro = carroService.save(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(carro));
     }
 
-    // Atualizar carro (por ID)
     @PutMapping("/{id}")
-    public ResponseEntity<Carro> atualizarCarro(@PathVariable Long id, @RequestBody Carro c) {
-        c.setId(id);  // Define o ID no objeto
-        Carro updatedCarro = carroService.update(c);
-        return ResponseEntity.ok(updatedCarro);
+    public ResponseEntity<CarroResponse> atualizarCarro(@PathVariable Long id, @RequestBody CarroRequest request, HttpServletRequest httpRequest) {
+        User loggedUser = authUtil.getLoggedUser(httpRequest);
+        roleBasedAccessService.checkGerenteOnly(loggedUser.getRole());
+
+        Carro carro = carroService.update(request, id);
+        return ResponseEntity.ok(mapToResponse(carro));
     }
 
-    // Deletar carro (por ID)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCarro(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarCarro(@PathVariable Long id, HttpServletRequest httpRequest) {
+        User loggedUser = authUtil.getLoggedUser(httpRequest);
+        roleBasedAccessService.checkGerenteOnly(loggedUser.getRole());
+
         carroService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Pesquisar carro por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Carro> pesquisarCarroPorId(@PathVariable Long id) {
+    public ResponseEntity<CarroResponse> pesquisarCarroPorId(@PathVariable Long id) {
         Optional<Carro> carro = carroService.findById(id);
-        return carro.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return carro.map(c -> ResponseEntity.ok(mapToResponse(c)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // Pesquisar todos os carros
     @GetMapping
-    public ResponseEntity<List<Carro>> pesquisarTodosCarros() {
-        List<Carro> carros = carroService.findAll();
-        return ResponseEntity.ok(carros);
+    public ResponseEntity<List<CarroResponse>> pesquisarTodosCarros(@RequestParam(required = false) String marca) {
+        List<Carro> carros = marca == null ? carroService.findAll() : carroService.findByMarca(marca);
+        return ResponseEntity.ok(carros.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList()));
+    }
+
+    private CarroResponse mapToResponse(Carro carro) {
+        return new CarroResponse(carro.getId(), carro.getMarca(), carro.getModelo(), carro.getAno());
     }
 }

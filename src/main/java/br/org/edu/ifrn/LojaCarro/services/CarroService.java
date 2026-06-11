@@ -1,8 +1,9 @@
-
 package br.org.edu.ifrn.LojaCarro.services;
 
+import br.org.edu.ifrn.LojaCarro.dto.CarroRequest;
 import br.org.edu.ifrn.LojaCarro.model.Carro;
 import br.org.edu.ifrn.LojaCarro.repository.CarroRepository;
+import br.org.edu.ifrn.LojaCarro.security.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,29 +14,66 @@ import java.util.Optional;
 public class CarroService {
 
     @Autowired
-    public CarroRepository carroRepository;
+    private CarroRepository carroRepository;
 
-    public Carro save(Carro c) {
-        return carroRepository.save(c);
+    @Autowired
+    private InputValidator validator;
+
+    public Carro save(CarroRequest request) {
+        validator.validateNotEmpty(request.getMarca(), "marca");
+        validator.validateNotEmpty(request.getModelo(), "modelo");
+        validator.validateFieldLength(request.getMarca(), "marca");
+        validator.validateFieldLength(request.getModelo(), "modelo");
+
+        Carro carro = new Carro();
+        carro.setMarca(validator.sanitize(request.getMarca()));
+        carro.setModelo(validator.sanitize(request.getModelo()));
+        carro.setAno(request.getAno());
+
+        return carroRepository.save(carro);
     }
 
-    // Novo método para deletar por ID
+    public Carro save(Carro carro) {
+        return save(new CarroRequest(carro.getMarca(), carro.getModelo(), carro.getAno()));
+    }
+
     public void deleteById(Long id) {
         carroRepository.deleteById(id);
     }
 
-    // Novo método para pesquisar por ID
     public Optional<Carro> findById(Long id) {
         return carroRepository.findById(id);
     }
 
-    // Novo método para listar todos os carros
     public List<Carro> findAll() {
         return carroRepository.findAll();
     }
 
-    // Método para atualizar (usa o save existente, mas pode ser renomeado se preferir)
-    public Carro update(Carro c) {
-        return carroRepository.save(c);  // Retorna o carro salvo para feedback
+    public List<Carro> findByMarca(String marca) {
+        validator.validateFieldLength(marca, "marca");
+        return carroRepository.findByMarcaIgnoreCase(validator.sanitize(marca));
+    }
+
+    public Carro update(CarroRequest request, Long id) {
+        validator.validateNotEmpty(request.getMarca(), "marca");
+        validator.validateNotEmpty(request.getModelo(), "modelo");
+        validator.validateFieldLength(request.getMarca(), "marca");
+        validator.validateFieldLength(request.getModelo(), "modelo");
+
+        Carro carro = carroRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Carro not found"));
+
+        carro.setMarca(validator.sanitize(request.getMarca()));
+        carro.setModelo(validator.sanitize(request.getModelo()));
+        carro.setAno(request.getAno());
+
+        return carroRepository.save(carro);
+    }
+
+    public Carro update(Carro carro) {
+        if (carro.getId() == null) {
+            throw new IllegalArgumentException("Carro id is required");
+        }
+        return update(new CarroRequest(carro.getMarca(), carro.getModelo(), carro.getAno()), carro.getId());
     }
 }

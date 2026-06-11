@@ -57,6 +57,7 @@ class CarroRepositoryIntegrationTest {
 
     private Carro criarCarro(String modelo, int ano) {
         Carro carro = new Carro();
+        carro.setMarca("Marca");
         carro.setModelo(modelo);
         carro.setAno(ano);
         return carro;

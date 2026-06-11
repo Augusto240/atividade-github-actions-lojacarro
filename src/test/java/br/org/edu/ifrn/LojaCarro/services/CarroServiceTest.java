@@ -2,6 +2,7 @@ package br.org.edu.ifrn.LojaCarro.services;
 
 import br.org.edu.ifrn.LojaCarro.model.Carro;
 import br.org.edu.ifrn.LojaCarro.repository.CarroRepository;
+import br.org.edu.ifrn.LojaCarro.security.InputValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class CarroServiceTest {
     @Mock
     private CarroRepository carroRepository;
 
+    @Mock
+    private InputValidator validator;
+
     @InjectMocks
     private CarroService carroService;
 
@@ -32,12 +36,12 @@ class CarroServiceTest {
     void saveDeveDelegarParaRepositoryERetornarCarroSalvo() {
         Carro carro = criarCarro(1L, "Gol", 2020);
 
-        when(carroRepository.save(carro)).thenReturn(carro);
+        when(carroRepository.save(org.mockito.ArgumentMatchers.any(Carro.class))).thenReturn(carro);
 
         Carro resultado = carroService.save(carro);
 
         assertSame(carro, resultado);
-        verify(carroRepository).save(carro);
+        verify(carroRepository).save(org.mockito.ArgumentMatchers.any(Carro.class));
         verifyNoMoreInteractions(carroRepository);
     }
 
@@ -45,12 +49,14 @@ class CarroServiceTest {
     void updateDeveDelegarParaRepositoryERetornarCarroAtualizado() {
         Carro carro = criarCarro(2L, "Onix", 2022);
 
-        when(carroRepository.save(carro)).thenReturn(carro);
+        when(carroRepository.findById(carro.getId())).thenReturn(Optional.of(carro));
+        when(carroRepository.save(org.mockito.ArgumentMatchers.any(Carro.class))).thenReturn(carro);
 
         Carro resultado = carroService.update(carro);
 
         assertSame(carro, resultado);
-        verify(carroRepository).save(carro);
+        verify(carroRepository).findById(carro.getId());
+        verify(carroRepository).save(org.mockito.ArgumentMatchers.any(Carro.class));
         verifyNoMoreInteractions(carroRepository);
     }
 
@@ -112,6 +118,7 @@ class CarroServiceTest {
     private Carro criarCarro(Long id, String modelo, int ano) {
         Carro carro = new Carro();
         carro.setId(id);
+        carro.setMarca("Marca");
         carro.setModelo(modelo);
         carro.setAno(ano);
         return carro;
