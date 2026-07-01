@@ -1,0 +1,55 @@
+INSTRUCOES DE EXECUCAO - FRONTEND LOJACARRO (Jose Augusto)
+============================================================
+
+Antes de subir os arquivos, abra "js/config.js" e ajuste a URL do backend:
+
+    const API_BASE_URL = "http://SEU-IP-OU-DOMINIO:8080";
+
+Exemplos:
+  - Backend rodando na mesma maquina/servidor: "http://localhost:8080"
+  - Backend em outra instancia AWS:            "http://ec2-xx-xx-xx-xx.compute.amazonaws.com:8080"
+
+
+SUBIR OS ARQUIVOS NO SERVIDOR (AWS)
+------------------------------------------------
+Descompacte o .zip em uma pasta no servidor
+
+Depois, sirva essa pasta com qualquer servidor de arquivos estaticos.
+
+Nao e necessario Node, Java ou qualquer runtime de build
+
+Nao abra nenhuma IDE no servidor: os arquivos ja estao prontos, so precisam
+ser copiados e servidos como estao.
+
+LIBERAR A PORTA NO SECURITY GROUP DA AWS
+----------------------------------------------------
+Se estiver usando EC2, libere no Security Group:
+  - A porta escolhida para o frontend (ex.: 8081, ou 80 se usar Nginx)
+  - A porta 8080 do backend (para o navegador do usuario conseguir chamar a API)
+
+BACKEND PRECISA ESTAR NO AR
+----------------------------------------
+O frontend so funciona com o backend LojaCarro rodando e acessivel na URL
+configurada em js/config.js. O backend ja tem CORS liberado (allowedOrigins "*"),
+entao funciona mesmo o frontend estando em host/porta diferente do backend.
+
+COMO USAR
+-----------------------
+1. Acesse a URL do frontend no navegador.
+2. Clique em "Registre-se" e crie uma conta:
+   - Papel GERENTE: pode cadastrar, editar e excluir carros.
+   - Papel VENDEDOR: so pode consultar a lista de carros.
+3. Apos registrar (ou fazer login), voce cai na tela de carros:
+   - Buscar por marca no campo de filtro.
+   - (Se GERENTE) Cadastrar novo carro preenchendo marca/modelo/ano e clicando em Salvar.
+   - (Se GERENTE) Editar/Excluir usando os botoes na coluna "Acoes".
+4. O botao "Sair" encerra a sessao (remove o token salvo no navegador).
+
+OBSERVACOES
+-----------
+- O token JWT fica salvo no localStorage do navegador; ao expirar (8h), o
+  sistema redireciona automaticamente para a tela de login.
+- Se aparecer erro "Muitas requisicoes em pouco tempo", e o rate limit do
+  backend (limite de chamadas por IP) - basta aguardar alguns segundos.
+- Nao ha nenhuma dependencia de instalacao (sem npm install, sem build): e
+  so abrir/servir os arquivos .html, .css e .js como estao.

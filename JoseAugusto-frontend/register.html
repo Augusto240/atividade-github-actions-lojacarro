@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LojaCarro - Registro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Criar conta</h1>
+        <p class="hint">Escolha o papel de acordo com o seu uso: GERENTE pode cadastrar/editar/excluir carros e criar usuários; VENDEDOR só consulta.</p>
+
+        <form id="form-registro">
+            <label for="email">Email</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Senha</label>
+            <input type="password" id="password" required>
+
+            <label for="role">Papel</label>
+            <select id="role" required>
+                <option value="VENDEDOR">VENDEDOR</option>
+                <option value="GERENTE">GERENTE</option>
+            </select>
+
+            <button type="submit" class="btn-primary">Registrar</button>
+        </form>
+
+        <div id="mensagem"></div>
+
+        <a class="link" href="index.html">Já tem conta? Fazer login</a>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById("form-registro").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const mensagem = document.getElementById("mensagem");
+            mensagem.innerHTML = "";
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const role = document.getElementById("role").value;
+
+            try {
+                const resultado = await fazerRegistro(email, password, role);
+                salvarSessao(resultado.token, resultado.email, resultado.role);
+                window.location.href = "carros.html";
+            } catch (erro) {
+                mensagem.innerHTML = `<div class="error">${erro.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
