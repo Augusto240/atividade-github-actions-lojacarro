@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LojaCarro - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>LojaCarro</h1>
+        <p class="hint">Entre com seu email e senha cadastrados.</p>
+
+        <form id="form-login">
+            <label for="email">Email</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Senha</label>
+            <input type="password" id="password" required>
+
+            <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+
+        <div id="mensagem"></div>
+
+        <a class="link" href="register.html">Ainda não tem conta? Registre-se</a>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById("form-login").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const mensagem = document.getElementById("mensagem");
+            mensagem.innerHTML = "";
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            try {
+                const resultado = await fazerLogin(email, password);
+                salvarSessao(resultado.token, resultado.email, resultado.role);
+                window.location.href = "carros.html";
+            } catch (erro) {
+                mensagem.innerHTML = `<div class="error">${erro.message}</div>`;
+            }
+        });
+
+        if (getToken()) {
+            window.location.href = "carros.html";
+        }
+    </script>
+</body>
+</html>
