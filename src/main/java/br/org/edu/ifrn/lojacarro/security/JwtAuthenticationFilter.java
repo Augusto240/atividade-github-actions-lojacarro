@@ -59,6 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isPublicEndpoint(String requestPath, String method) {
         return requestPath.equals("/auth/login")
                 || requestPath.equals("/auth/register")
+                || requestPath.equals("/boas-vindas")
                 || HttpMethod.OPTIONS.matches(method);
     }
 }

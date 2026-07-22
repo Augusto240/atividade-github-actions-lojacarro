@@ -103,6 +103,37 @@
 				<version>5.7.0.6970</version>
 			</plugin>
 			<plugin>
+				<groupId>org.pitest</groupId>
+				<artifactId>pitest-maven</artifactId>
+				<version>1.25.8</version>
+				<configuration>
+					<targetClasses>
+						<param>br.org.edu.ifrn.lojacarro.services.*</param>
+						<param>br.org.edu.ifrn.lojacarro.security.*</param>
+					</targetClasses>
+					<targetTests>
+						<param>br.org.edu.ifrn.lojacarro.services.*</param>
+						<param>br.org.edu.ifrn.lojacarro.security.*</param>
+					</targetTests>
+					<excludedClasses>
+						<param>br.org.edu.ifrn.lojacarro.security.RateLimitFilter</param>
+						<param>br.org.edu.ifrn.lojacarro.security.JwtAuthenticationFilter</param>
+						<param>br.org.edu.ifrn.lojacarro.security.SecurityConfiguration</param>
+					</excludedClasses>
+					<outputFormats>
+						<outputFormat>HTML</outputFormat>
+					</outputFormats>
+					<timestampedReports>false</timestampedReports>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.pitest</groupId>
+						<artifactId>pitest-junit5-plugin</artifactId>
+						<version>1.2.3</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.15</version>
@@ -140,10 +171,10 @@
 								</rule>
 							</rules>
 							<excludes>
-								<exclude>br/org/edu/ifrn/LojaCarro/LojaCarroApplication.class</exclude>
-								<exclude>br/org/edu/ifrn/LojaCarro/dto/**</exclude>
-								<exclude>br/org/edu/ifrn/LojaCarro/model/**</exclude>
-								<exclude>br/org/edu/ifrn/LojaCarro/exception/GlobalExceptionHandler.class</exclude>
+								<exclude>br/org/edu/ifrn/lojacarro/LojaCarroApplication.class</exclude>
+								<exclude>br/org/edu/ifrn/lojacarro/dto/**</exclude>
+								<exclude>br/org/edu/ifrn/lojacarro/model/**</exclude>
+								<exclude>br/org/edu/ifrn/lojacarro/exception/GlobalExceptionHandler.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>
