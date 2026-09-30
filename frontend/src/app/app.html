@@ -1,0 +1,39 @@
+<header class="topo">
+  <div class="topo-conteudo">
+    <a routerLink="/" class="marca">
+      <span class="marca-icone">LC</span>
+      LojaCarro
+    </a>
+
+    <nav>
+      <a routerLink="/usuarios" routerLinkActive="ativo">Usuários</a>
+      <a routerLink="/carros" routerLinkActive="ativo">Carros</a>
+      <a routerLink="/auditoria" routerLinkActive="ativo">Auditoria</a>
+    </nav>
+
+    <div class="operador">
+      <label for="operador">Usuário</label>
+      <select id="operador" (change)="trocarOperador($any($event.target).value)">
+        <option value="" [selected]="!usuarios.operador()">Selecione</option>
+        @for (usuario of usuarios.usuarios(); track usuario.id) {
+          <option [value]="usuario.id" [selected]="usuario.id === usuarios.operador()?.id">
+            {{ usuario.nome }} ({{ usuario.cargo }})
+          </option>
+        }
+      </select>
+    </div>
+  </div>
+</header>
+
+<main class="conteudo">
+  <router-outlet />
+</main>
+
+<div class="avisos" aria-live="polite">
+  @for (aviso of avisos.avisos(); track aviso.id) {
+    <div class="aviso" [class.aviso-erro]="aviso.tipo === 'erro'" role="status">
+      <span>{{ aviso.texto }}</span>
+      <button type="button" (click)="avisos.fechar(aviso.id)" aria-label="Fechar">×</button>
+    </div>
+  }
+</div>

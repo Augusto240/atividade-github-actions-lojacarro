@@ -1,10 +1,13 @@
 package br.org.edu.ifrn.lojacarro.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class InputValidator {
 
+    private static final Logger log = LoggerFactory.getLogger(InputValidator.class);
     private static final int MAX_FIELD_LENGTH = 255;
     private static final String HTML_SCRIPT_PATTERN = "(?i)(<[^>]*>|javascript:|onerror=|onload=)";
 
@@ -12,7 +15,12 @@ public class InputValidator {
         if (input == null) {
             return null;
         }
-        return input.replaceAll(HTML_SCRIPT_PATTERN, "").trim();
+        String limpo = input.replaceAll(HTML_SCRIPT_PATTERN, "").trim();
+        if (!limpo.equals(input.trim())) {
+            log.warn("Entrada com HTML/script removido (possivel XSS). Tamanho original {}, limpo {}",
+                    input.length(), limpo.length());
+        }
+        return limpo;
     }
 
     public void validateFieldLength(String value, String fieldName) {

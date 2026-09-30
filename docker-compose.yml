@@ -20,20 +20,19 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: josecarro
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      JWT_SECRET: chave-secreta-lojacarro-para-desenvolvimento-com-mais-de-32-caracteres
+      SERVER: dev
+      BD_NAME: josecarro
+      BD_USER: root
+      BD_PASS: root
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/josecarro?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
     ports:
       - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
 
   frontend:
-    image: nginx:alpine
+    build: ./frontend
     container_name: lojacarro-frontend
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
     ports:
       - "8081:80"
     depends_on:

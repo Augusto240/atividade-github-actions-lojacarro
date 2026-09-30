@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
     @Value("${ratelimit.max-requests:20}")
     private int maxRequests;
@@ -38,7 +42,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return existing;
         });
 
-        if (window.count.get() > maxRequests) {
+        int total = window.count.get();
+        if (total > maxRequests) {
+            if (total == maxRequests + 1) {
+                log.warn("Limite de {} requisicoes em {}s estourado por {}. Bloqueando ate a janela virar",
+                        maxRequests, windowSeconds, clientKey);
+            } else {
+                log.debug("Requisicao {} de {} bloqueada pelo rate limit", total, clientKey);
+            }
             response.setStatus(429);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"Too many requests - rate limit exceeded\"}");

@@ -1,0 +1,77 @@
+<h1>Carros</h1>
+
+<div class="grade" [class.grade-dupla]="usuarios.operadorEhGerente()">
+  @if (usuarios.operadorEhGerente()) {
+    <form class="card" [formGroup]="form" (ngSubmit)="salvar()">
+      <h2>{{ editando() ? 'Editar carro' : 'Novo carro' }}</h2>
+
+      <label for="marca">Marca</label>
+      <input id="marca" formControlName="marca" />
+
+      <label for="modelo">Modelo</label>
+      <input id="modelo" formControlName="modelo" />
+
+      <label for="ano">Ano</label>
+      <input id="ano" type="number" formControlName="ano" />
+      @if (form.invalid && form.touched) {
+        <small class="erro-campo">Preencha todos os campos</small>
+      }
+
+      <div class="acoes-form">
+        <button type="submit" class="botao">Salvar</button>
+        @if (editando()) {
+          <button type="button" class="botao botao-leve" (click)="cancelar()">Cancelar</button>
+        }
+      </div>
+    </form>
+  }
+
+  <div class="card">
+    <div class="card-topo">
+      <h2>Lista</h2>
+      <input
+        class="busca"
+        placeholder="Buscar por marca"
+        [value]="filtro()"
+        (keyup.enter)="filtrar(busca.value)"
+        #busca
+      />
+    </div>
+
+    @if (carregando() && carros().length === 0) {
+      <p class="suave">Carregando...</p>
+    } @else if (carros().length === 0) {
+      <p class="suave">Nenhum carro encontrado.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Ano</th>
+            @if (usuarios.operadorEhGerente()) {
+              <th></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (carro of carros(); track carro.id) {
+            <tr>
+              <td class="suave">{{ carro.id }}</td>
+              <td>{{ carro.marca }}</td>
+              <td>{{ carro.modelo }}</td>
+              <td>{{ carro.ano }}</td>
+              @if (usuarios.operadorEhGerente()) {
+                <td class="col-acoes">
+                  <button type="button" class="botao-link" (click)="editar(carro)">Editar</button>
+                  <button type="button" class="botao-link perigo" (click)="excluir(carro)">Excluir</button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="cabecalho-pagina">
+  <h1>Auditoria</h1>
+  @if (usuarios.operadorEhGerente()) {
+    <button type="button" class="botao botao-leve" (click)="carregar()" [disabled]="carregando()">Verificar</button>
+  }
+</div>
+
+@if (!usuarios.operadorEhGerente()) {
+  <div class="faixa faixa-alerta">Apenas gerentes podem ver a auditoria.</div>
+} @else {
+  @if (integridade(); as resultado) {
+    <div class="faixa" [class.faixa-ok]="resultado.integra" [class.faixa-perigo]="!resultado.integra">
+      {{ resultado.mensagem }} ({{ resultado.totalRegistros }} registros verificados)
+    </div>
+  }
+
+  <div class="card">
+    @if (registros().length === 0) {
+      <p class="suave">{{ carregando() ? 'Carregando...' : 'Nenhum registro.' }}</p>
+    } @else {
+      <div class="rolagem">
+        <table class="tabela-auditoria">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Data</th>
+              <th>Ação</th>
+              <th>Usuário</th>
+              <th>Detalhes</th>
+              <th>Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (registro of registros(); track registro.id) {
+              <tr [class.linha-perigo]="registro.id === integridade()?.registroAdulterado">
+                <td class="suave">{{ registro.id }}</td>
+                <td class="sem-quebra">{{ emUtc(registro.dataHora) | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                <td><span class="selo {{ tipoDaAcao(registro.acao) }}">{{ registro.acao }}</span></td>
+                <td>{{ registro.responsavel }}</td>
+                <td class="detalhes">{{ registro.detalhes }}</td>
+                <td><code [title]="registro.hash">{{ registro.hash | slice: 0 : 10 }}</code></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

@@ -1,12 +1,11 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
+import br.org.edu.ifrn.lojacarro.model.Cargo;
 import br.org.edu.ifrn.lojacarro.model.Carro;
-import br.org.edu.ifrn.lojacarro.model.User;
-import br.org.edu.ifrn.lojacarro.model.UserRole;
+import br.org.edu.ifrn.lojacarro.model.Usuario;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
-import br.org.edu.ifrn.lojacarro.repository.UserRepository;
-import br.org.edu.ifrn.lojacarro.security.JwtTokenProvider;
+import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,20 +37,17 @@ class XssSanitizationIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private CarroRepository carroRepository;
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
 
     @Test
     void marcaComScriptDeveSerSanitizadaNaRespostaENoBanco() throws Exception {
         CarroRequest request = new CarroRequest("<script>alert(1)</script>Toyota", "Corolla", 2022);
 
         MvcResult result = mockMvc.perform(post("/carro/salvar")
-                        .header("Authorization", "Bearer " + gerenteToken())
+                        .header("X-Usuario-Id", gerenteId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -69,8 +65,7 @@ class XssSanitizationIntegrationTest {
         assertTrue(persistido.getMarca().contains("Toyota"));
     }
 
-    private String gerenteToken() {
-        User user = userRepository.save(new User("gerente-xss@teste.com", "senha", UserRole.GERENTE));
-        return tokenProvider.generateToken(user);
+    private Long gerenteId() {
+        return usuarioRepository.save(new Usuario("Gerente Xss", Cargo.GERENTE)).getId();
     }
 }

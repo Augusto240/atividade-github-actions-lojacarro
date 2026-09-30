@@ -1,11 +1,10 @@
 package br.org.edu.ifrn.lojacarro.controllers;
 
+import br.org.edu.ifrn.lojacarro.model.Cargo;
 import br.org.edu.ifrn.lojacarro.model.Carro;
-import br.org.edu.ifrn.lojacarro.model.User;
-import br.org.edu.ifrn.lojacarro.model.UserRole;
+import br.org.edu.ifrn.lojacarro.model.Usuario;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
-import br.org.edu.ifrn.lojacarro.repository.UserRepository;
-import br.org.edu.ifrn.lojacarro.security.JwtTokenProvider;
+import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,17 +45,14 @@ class CarroControllerTest {
     private CarroRepository carroRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void salvarDevePersistirNoBanco() throws Exception {
         Carro requisicao = criarCarro("Gol", 2020);
 
         mockMvc.perform(post("/carro/salvar")
-                        .header("Authorization", "Bearer " + gerenteToken())
+                        .header("X-Usuario-Id", gerenteId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requisicao)))
                 .andExpect(status().isCreated())
@@ -75,7 +71,7 @@ class CarroControllerTest {
         Carro atualizacao = criarCarro("Onix Plus", 2023);
 
         mockMvc.perform(put("/carro/{id}", salvo.getId())
-                        .header("Authorization", "Bearer " + gerenteToken())
+                        .header("X-Usuario-Id", gerenteId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atualizacao)))
                 .andExpect(status().isOk())
@@ -93,7 +89,7 @@ class CarroControllerTest {
         Carro salvo = carroRepository.save(criarCarro("HB20", 2021));
 
         mockMvc.perform(delete("/carro/{id}", salvo.getId())
-                        .header("Authorization", "Bearer " + gerenteToken()))
+                        .header("X-Usuario-Id", gerenteId()))
                 .andExpect(status().isNoContent());
 
         assertTrue(carroRepository.findById(salvo.getId()).isEmpty());
@@ -103,8 +99,7 @@ class CarroControllerTest {
     void procurarPorIdDeveRetornarOkQuandoEncontrado() throws Exception {
         Carro salvo = carroRepository.save(criarCarro("Uno", 2015));
 
-        mockMvc.perform(get("/carro/{id}", salvo.getId())
-                        .header("Authorization", "Bearer " + gerenteToken()))
+        mockMvc.perform(get("/carro/{id}", salvo.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(salvo.getId()))
                 .andExpect(jsonPath("$.modelo").value("Uno"))
@@ -113,8 +108,7 @@ class CarroControllerTest {
 
     @Test
     void procurarPorIdDeveRetornarNotFoundQuandoNaoExiste() throws Exception {
-        mockMvc.perform(get("/carro/{id}", 9999L)
-                        .header("Authorization", "Bearer " + gerenteToken()))
+        mockMvc.perform(get("/carro/{id}", 9999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -124,8 +118,7 @@ class CarroControllerTest {
         carroRepository.save(criarCarro("Palio", 2016));
         carroRepository.save(criarCarro("Celta", 2014));
 
-        mockMvc.perform(get("/carro")
-                        .header("Authorization", "Bearer " + gerenteToken()))
+        mockMvc.perform(get("/carro"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").isNumber())
                 .andExpect(jsonPath("$[1].id").isNumber())
@@ -140,9 +133,7 @@ class CarroControllerTest {
         return carro;
     }
 
-    private String gerenteToken() {
-        User user = new User("gerente@teste.com", "senha", UserRole.GERENTE);
-        User savedUser = userRepository.save(user);
-        return tokenProvider.generateToken(savedUser);
+    private Long gerenteId() {
+        return usuarioRepository.save(new Usuario("Gerente Teste", Cargo.GERENTE)).getId();
     }
 }

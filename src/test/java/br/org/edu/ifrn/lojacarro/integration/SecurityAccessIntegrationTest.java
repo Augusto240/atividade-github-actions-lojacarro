@@ -1,10 +1,9 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
-import br.org.edu.ifrn.lojacarro.model.User;
-import br.org.edu.ifrn.lojacarro.model.UserRole;
-import br.org.edu.ifrn.lojacarro.repository.UserRepository;
-import br.org.edu.ifrn.lojacarro.security.JwtTokenProvider;
+import br.org.edu.ifrn.lojacarro.model.Cargo;
+import br.org.edu.ifrn.lojacarro.model.Usuario;
+import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +15,10 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -34,64 +35,48 @@ class SecurityAccessIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+    private UsuarioRepository usuarioRepository;
 
     @Test
-    void requisicaoSemHeaderAuthorizationDeveRetornarUnauthorized() throws Exception {
+    void qualquerUmPodeConsultarCarros() throws Exception {
         mockMvc.perform(get("/carro"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test
-    void requisicaoComTokenInvalidoDeveRetornarUnauthorized() throws Exception {
-        mockMvc.perform(get("/carro")
-                        .header("Authorization", "Bearer token-invalido-e-mal-formado"))
+    void cadastrarCarroSemIdentificacaoDeveRetornarUnauthorized() throws Exception {
+        mockMvc.perform(post("/carro/salvar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CarroRequest("Fiat", "Uno", 2015))))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void vendedorNaoPodeCriarCarro() throws Exception {
-        CarroRequest request = new CarroRequest("Fiat", "Uno", 2015);
-
         mockMvc.perform(post("/carro/salvar")
-                        .header("Authorization", "Bearer " + vendedorToken())
+                        .header("X-Usuario-Id", usuario(Cargo.VENDEDOR))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                        .content(objectMapper.writeValueAsString(new CarroRequest("Fiat", "Uno", 2015))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("O cargo VENDEDOR não pode cadastrar carros"));
     }
 
     @Test
-    void vendedorNaoPodeCriarUsuario() throws Exception {
-        String body = "{\"email\":\"outro@teste.com\",\"password\":\"senha123\",\"role\":\"VENDEDOR\"}";
-
-        mockMvc.perform(post("/usuarios")
-                        .header("Authorization", "Bearer " + vendedorToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+    void vendedorNaoPodeExcluirCarro() throws Exception {
+        mockMvc.perform(delete("/carro/1").header("X-Usuario-Id", usuario(Cargo.VENDEDOR)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void gerentePodeCriarCarro() throws Exception {
-        CarroRequest request = new CarroRequest("Fiat", "Palio", 2017);
-
         mockMvc.perform(post("/carro/salvar")
-                        .header("Authorization", "Bearer " + gerenteToken())
+                        .header("X-Usuario-Id", usuario(Cargo.GERENTE))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(new CarroRequest("Fiat", "Palio", 2017))))
                 .andExpect(status().isCreated());
     }
 
-    private String vendedorToken() {
-        User user = userRepository.save(new User("vendedor-seguranca@teste.com", "senha", UserRole.VENDEDOR));
-        return tokenProvider.generateToken(user);
-    }
-
-    private String gerenteToken() {
-        User user = userRepository.save(new User("gerente-seguranca@teste.com", "senha", UserRole.GERENTE));
-        return tokenProvider.generateToken(user);
+    private Long usuario(Cargo cargo) {
+        return usuarioRepository.save(new Usuario("Teste " + cargo, cargo)).getId();
     }
 }

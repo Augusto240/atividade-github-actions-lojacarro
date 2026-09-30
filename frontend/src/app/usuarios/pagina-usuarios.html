@@ -1,0 +1,78 @@
+<h1>Usuários</h1>
+
+@if (!usuarios.operador()) {
+  <div class="faixa faixa-info">Selecione um usuário no topo da página para cadastrar ou editar.</div>
+} @else if (!usuarios.operadorEhGerente()) {
+  <div class="faixa faixa-alerta">Vendedor só pode consultar.</div>
+}
+
+<div class="grade" [class.grade-dupla]="usuarios.operadorEhGerente()">
+  @if (usuarios.operadorEhGerente()) {
+    <form class="card" [formGroup]="form" (ngSubmit)="salvar()">
+      <h2>{{ editando() ? 'Editar usuário' : 'Novo usuário' }}</h2>
+
+      <label for="nome">Nome</label>
+      <input id="nome" formControlName="nome" autocomplete="off" />
+      @if (campoInvalido('nome')) {
+        <small class="erro-campo">Nome obrigatório (máx. 100 caracteres)</small>
+      }
+
+      <label for="cargo">Cargo</label>
+      <select id="cargo" formControlName="cargo">
+        @for (cargo of cargos; track cargo) {
+          <option [value]="cargo">{{ cargo }}</option>
+        }
+      </select>
+
+      <div class="acoes-form">
+        <button type="submit" class="botao" [disabled]="salvando()">Salvar</button>
+        @if (editando()) {
+          <button type="button" class="botao botao-leve" (click)="cancelar()">Cancelar</button>
+        }
+      </div>
+    </form>
+  }
+
+  <div class="card">
+    <div class="card-topo">
+      <h2>Lista</h2>
+      <span class="suave">{{ usuarios.usuarios().length }} usuário(s)</span>
+    </div>
+
+    @if (usuarios.carregando() && usuarios.usuarios().length === 0) {
+      <p class="suave">Carregando...</p>
+    } @else if (usuarios.usuarios().length === 0) {
+      <p class="suave">Nenhum usuário cadastrado.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Cargo</th>
+            @if (usuarios.operadorEhGerente()) {
+              <th></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (usuario of usuarios.usuarios(); track usuario.id) {
+            <tr>
+              <td class="suave">{{ usuario.id }}</td>
+              <td>{{ usuario.nome }}</td>
+              <td>
+                <span class="selo" [class.selo-gerente]="usuario.cargo === 'GERENTE'">{{ usuario.cargo }}</span>
+              </td>
+              @if (usuarios.operadorEhGerente()) {
+                <td class="col-acoes">
+                  <button type="button" class="botao-link" (click)="editar(usuario)">Editar</button>
+                  <button type="button" class="botao-link perigo" (click)="excluir(usuario)">Excluir</button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

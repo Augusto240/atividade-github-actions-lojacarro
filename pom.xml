@@ -11,6 +11,7 @@
 	<groupId>br.org.edu.ifrn</groupId>
 	<artifactId>LojaCarro</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
 	<name>LojaCarro</name>
 	<description>Loja de Carro</description>
 	<url/>
@@ -39,31 +40,6 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-api</artifactId>
-			<version>0.12.3</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-impl</artifactId>
-			<version>0.12.3</version>
-			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-jackson</artifactId>
-			<version>0.12.3</version>
-			<scope>runtime</scope>
-		</dependency>
-
         <!-- Source: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -85,6 +61,12 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
@@ -92,6 +74,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>augusto</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -117,8 +100,6 @@
 					</targetTests>
 					<excludedClasses>
 						<param>br.org.edu.ifrn.lojacarro.security.RateLimitFilter</param>
-						<param>br.org.edu.ifrn.lojacarro.security.JwtAuthenticationFilter</param>
-						<param>br.org.edu.ifrn.lojacarro.security.SecurityConfiguration</param>
 					</excludedClasses>
 					<outputFormats>
 						<outputFormat>HTML</outputFormat>

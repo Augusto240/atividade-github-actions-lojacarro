@@ -1,0 +1,137 @@
+.topo {
+  background: var(--cor-topo);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topo-conteudo {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+
+.marca-icone {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--cor-primaria);
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+}
+
+nav a {
+  color: #c6cde0;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+nav a.ativo {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.operador {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.operador label {
+  margin: 0;
+  color: #c6cde0;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.operador select {
+  width: auto;
+  min-width: 190px;
+  margin: 0;
+  background: #1c2742;
+  color: #fff;
+  border-color: #33405f;
+}
+
+.conteudo {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+.avisos {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 20;
+}
+
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+  max-width: 380px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--cor-sucesso);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(17, 26, 46, 0.18);
+}
+
+.aviso-erro {
+  background: var(--cor-perigo);
+}
+
+.aviso button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .operador {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .operador select {
+    flex: 1;
+  }
+}
