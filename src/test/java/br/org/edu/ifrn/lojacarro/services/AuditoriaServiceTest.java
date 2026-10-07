@@ -33,16 +33,16 @@ class AuditoriaServiceTest {
 
     @Test
     void primeiroRegistroDevePartirDoHashInicial() {
-        RegistroAuditoria registro = auditoriaService.registrar(AcaoAuditoria.USUARIO_CRIADO, "Marta", "Cadastrou Caio");
+        RegistroAuditoria registro = auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, "Marta", "Cadastrou Caio");
 
         assertEquals(AuditoriaService.HASH_INICIAL, registro.getHashAnterior());
         assertEquals(64, registro.getHash().length());
-        assertEquals("USUARIO_CRIADO", registro.getAcao());
+        assertEquals("CARRO_CRIADO", registro.getAcao());
     }
 
     @Test
     void cadaRegistroApontaParaOHashDoAnterior() {
-        RegistroAuditoria primeiro = auditoriaService.registrar(AcaoAuditoria.USUARIO_CRIADO, "Marta", "Cadastrou Caio");
+        RegistroAuditoria primeiro = auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, "Marta", "Cadastrou Caio");
         RegistroAuditoria segundo = auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, "Marta", "Gol");
 
         assertEquals(primeiro.getHash(), segundo.getHashAnterior());
@@ -118,9 +118,9 @@ class AuditoriaServiceTest {
     }
 
     private void registrarTres() {
-        auditoriaService.registrar(AcaoAuditoria.USUARIO_CRIADO, "Marta", "Cadastrou Caio");
-        auditoriaService.registrar(AcaoAuditoria.USUARIO_ATUALIZADO, "Marta", "Caio virou gerente");
-        auditoriaService.registrar(AcaoAuditoria.USUARIO_EXCLUIDO, "Marta", "Excluiu Caio");
+        auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, "Marta", "Cadastrou Caio");
+        auditoriaService.registrar(AcaoAuditoria.CARRO_ATUALIZADO, "Marta", "Caio virou gerente");
+        auditoriaService.registrar(AcaoAuditoria.CARRO_EXCLUIDO, "Marta", "Excluiu Caio");
     }
 
     private static class BancoEmMemoria implements RegistroAuditoriaRepository {

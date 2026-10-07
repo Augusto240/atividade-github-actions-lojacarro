@@ -1,11 +1,9 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
+import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
-import br.org.edu.ifrn.lojacarro.model.Cargo;
 import br.org.edu.ifrn.lojacarro.model.Carro;
-import br.org.edu.ifrn.lojacarro.model.Usuario;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
-import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +11,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,8 +38,8 @@ class XssSanitizationIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    @MockitoBean
+    private UsuarioClient usuarioClient;
 
     @Autowired
     private CarroRepository carroRepository;
@@ -66,6 +68,7 @@ class XssSanitizationIntegrationTest {
     }
 
     private Long gerenteId() {
-        return usuarioRepository.save(new Usuario("Gerente Xss", Cargo.GERENTE)).getId();
+        when(usuarioClient.buscarNome(1L)).thenReturn(Optional.of("Gerente Xss"));
+        return 1L;
     }
 }

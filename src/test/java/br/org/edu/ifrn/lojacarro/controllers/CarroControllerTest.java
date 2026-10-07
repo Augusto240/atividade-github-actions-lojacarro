@@ -1,25 +1,27 @@
 package br.org.edu.ifrn.lojacarro.controllers;
 
-import br.org.edu.ifrn.lojacarro.model.Cargo;
+import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
 import br.org.edu.ifrn.lojacarro.model.Carro;
-import br.org.edu.ifrn.lojacarro.model.Usuario;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
-import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,8 +46,13 @@ class CarroControllerTest {
     @Autowired
     private CarroRepository carroRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    @MockitoBean
+    private UsuarioClient usuarioClient;
+
+    @BeforeEach
+    void setUp() {
+        when(usuarioClient.buscarNome(1L)).thenReturn(Optional.of("Gerente Teste"));
+    }
 
     @Test
     void salvarDevePersistirNoBanco() throws Exception {
@@ -134,6 +141,6 @@ class CarroControllerTest {
     }
 
     private Long gerenteId() {
-        return usuarioRepository.save(new Usuario("Gerente Teste", Cargo.GERENTE)).getId();
+        return 1L;
     }
 }

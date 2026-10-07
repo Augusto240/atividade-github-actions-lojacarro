@@ -49,14 +49,14 @@ class LogIntegrationTest {
 
     @Test
     void cadaRequisicaoGeraLogDeEntradaESaidaComStatus(CapturedOutput output) throws Exception {
-        mockMvc.perform(get("/usuarios/987654").header("X-Request-Id", "log-404"))
+        mockMvc.perform(get("/carro/987654").header("X-Request-Id", "log-404"))
                 .andExpect(status().isNotFound())
                 .andExpect(header().string("X-Request-Id", "log-404"));
 
         assertThat(output)
-                .contains("--> GET /usuarios/987654")
-                .contains("Usuario 987654 nao encontrado")
-                .contains("<-- GET /usuarios/987654 respondeu 404");
+                .contains("--> GET /carro/987654")
+                .contains("anonimo procurou o carro 987654 que nao existe")
+                .contains("<-- GET /carro/987654 respondeu 404");
     }
 
     @Test
@@ -82,7 +82,7 @@ class LogIntegrationTest {
     @Test
     void rotaInexistenteDa404EMetodoErradoDa405() throws Exception {
         mockMvc.perform(get("/auditoria/nada/aqui")).andExpect(status().isNotFound());
-        mockMvc.perform(patch("/usuarios")).andExpect(status().isMethodNotAllowed());
+        mockMvc.perform(patch("/carro")).andExpect(status().isMethodNotAllowed());
     }
 
     private void enviarLogDoFrontend(String json) throws Exception {

@@ -1,11 +1,9 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
-import br.org.edu.ifrn.lojacarro.dto.UsuarioRequest;
-import br.org.edu.ifrn.lojacarro.model.Cargo;
+import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
+import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
 import br.org.edu.ifrn.lojacarro.model.RegistroAuditoria;
-import br.org.edu.ifrn.lojacarro.model.Usuario;
 import br.org.edu.ifrn.lojacarro.repository.RegistroAuditoriaRepository;
-import br.org.edu.ifrn.lojacarro.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,11 +14,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Optional;
+
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,9 +43,6 @@ class AuditoriaIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
     private RegistroAuditoriaRepository auditoriaRepository;
 
     @Autowired
@@ -53,56 +51,51 @@ class AuditoriaIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
-    private Usuario marta;
-    private Usuario caio;
+    @MockitoBean
+    private UsuarioClient usuarioClient;
 
     @BeforeEach
     void setUp() {
-        marta = usuarioRepository.save(new Usuario("Marta", Cargo.GERENTE));
-        caio = usuarioRepository.save(new Usuario("Caio", Cargo.VENDEDOR));
+        when(usuarioClient.buscarNome(1L)).thenReturn(Optional.of("Marta"));
     }
 
     @Test
-    void cadastroDeUsuarioApareceNaTrilhaComQuemFez() throws Exception {
-        cadastrar("Beatriz");
+    void cadastroDeCarroApareceNaTrilhaComONomeQueVeioDaApi() throws Exception {
+        cadastrar("Gol");
 
-        mockMvc.perform(get("/auditoria").header(HEADER_USUARIO, marta.getId()))
+        mockMvc.perform(get("/auditoria").header(HEADER_USUARIO, 1))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].acao").value("USUARIO_CRIADO"))
-                .andExpect(jsonPath("$[0].responsavel").value("Marta #" + marta.getId() + " (GERENTE)"))
+                .andExpect(jsonPath("$[0].acao").value("CARRO_CRIADO"))
+                .andExpect(jsonPath("$[0].responsavel").value("Marta (#1)"))
                 .andExpect(jsonPath("$[0].hash").isNotEmpty());
     }
 
     @Test
-    void vendedorNaoVeAuditoriaEATentativaFicaRegistrada() throws Exception {
-        mockMvc.perform(get("/auditoria").header(HEADER_USUARIO, caio.getId()))
-                .andExpect(status().isForbidden());
-
-        RegistroAuditoria ultimo = auditoriaRepository.findTopByOrderByIdDesc().orElseThrow();
-        assertThat(ultimo.getAcao()).isEqualTo("ACESSO_NEGADO");
-        assertThat(ultimo.getResponsavel()).contains("Caio");
+    void verAuditoriaSemIdentificacaoDaUnauthorized() throws Exception {
+        mockMvc.perform(get("/auditoria"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void trilhaSemMexidaEstaIntegra() throws Exception {
-        cadastrar("Beatriz");
-        cadastrar("Diego");
+        cadastrar("Gol");
+        cadastrar("Uno");
 
-        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, marta.getId()))
+        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.integra").value(true));
     }
 
     @Test
     void alteracaoFeitaDiretoNoBancoEhDescoberta() throws Exception {
-        cadastrar("Beatriz");
+        cadastrar("Gol");
         RegistroAuditoria alvo = auditoriaRepository.findTopByOrderByIdDesc().orElseThrow();
-        cadastrar("Diego");
+        cadastrar("Uno");
 
         jdbcTemplate.update("update auditoria set detalhes = 'nada aconteceu' where id = ?", alvo.getId());
         entityManager.clear();
 
-        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, marta.getId()))
+        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.integra").value(false))
                 .andExpect(jsonPath("$.registroAdulterado").value(alvo.getId()));
@@ -110,24 +103,24 @@ class AuditoriaIntegrationTest {
 
     @Test
     void registroApagadoDiretoNoBancoTambemEhDescoberto() throws Exception {
-        cadastrar("Beatriz");
+        cadastrar("Gol");
         RegistroAuditoria apagado = auditoriaRepository.findTopByOrderByIdDesc().orElseThrow();
-        cadastrar("Diego");
+        cadastrar("Uno");
         RegistroAuditoria seguinte = auditoriaRepository.findTopByOrderByIdDesc().orElseThrow();
 
         jdbcTemplate.update("delete from auditoria where id = ?", apagado.getId());
         entityManager.clear();
 
-        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, marta.getId()))
+        mockMvc.perform(get("/auditoria/integridade").header(HEADER_USUARIO, 1))
                 .andExpect(jsonPath("$.integra").value(false))
                 .andExpect(jsonPath("$.registroAdulterado").value(seguinte.getId()));
     }
 
-    private void cadastrar(String nome) throws Exception {
-        mockMvc.perform(post("/usuarios")
-                        .header(HEADER_USUARIO, marta.getId())
+    private void cadastrar(String modelo) throws Exception {
+        mockMvc.perform(post("/carro/salvar")
+                        .header(HEADER_USUARIO, 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new UsuarioRequest(nome, "VENDEDOR"))))
+                        .content(objectMapper.writeValueAsString(new CarroRequest("Fiat", modelo, 2020))))
                 .andExpect(status().isCreated());
     }
 }

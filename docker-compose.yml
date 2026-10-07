@@ -13,27 +13,44 @@ services:
       timeout: 5s
       retries: 20
 
-  backend:
-    build: .
-    container_name: lojacarro-backend
+  usuarios-api:
+    build: ../lojacarro-usuarios-api
+    container_name: usuarios-api
     depends_on:
       mysql:
         condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usuarios?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./logs/usuarios-api:/app/logs
+
+  lojacarro-api:
+    build: .
+    container_name: lojacarro-api
+    depends_on:
+      mysql:
+        condition: service_healthy
+      usuarios-api:
+        condition: service_started
     environment:
       SERVER: dev
       BD_NAME: josecarro
       BD_USER: root
       BD_PASS: root
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/josecarro?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      USUARIOS_API_URL: http://usuarios-api:8081
     ports:
       - "8080:8080"
     volumes:
-      - ./logs:/app/logs
+      - ./logs/lojacarro:/app/logs
 
   frontend:
-    build: ./frontend
+    build: ../lojacarro-frontend
     container_name: lojacarro-frontend
-    ports:
-      - "8081:80"
     depends_on:
-      - backend
+      - lojacarro-api
+      - usuarios-api
+    ports:
+      - "4200:80"

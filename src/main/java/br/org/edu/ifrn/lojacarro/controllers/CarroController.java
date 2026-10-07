@@ -3,10 +3,8 @@ package br.org.edu.ifrn.lojacarro.controllers;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
 import br.org.edu.ifrn.lojacarro.dto.CarroResponse;
 import br.org.edu.ifrn.lojacarro.model.AcaoAuditoria;
-import br.org.edu.ifrn.lojacarro.model.Cargo;
 import br.org.edu.ifrn.lojacarro.model.Carro;
-import br.org.edu.ifrn.lojacarro.model.Usuario;
-import br.org.edu.ifrn.lojacarro.security.ControleAcessoUsuario;
+import br.org.edu.ifrn.lojacarro.security.IdentificacaoUsuario;
 import br.org.edu.ifrn.lojacarro.services.AuditoriaService;
 import br.org.edu.ifrn.lojacarro.services.CarroService;
 import org.slf4j.Logger;
@@ -25,63 +23,69 @@ public class CarroController {
     private static final Logger log = LoggerFactory.getLogger(CarroController.class);
 
     private final CarroService carroService;
-    private final ControleAcessoUsuario controleAcesso;
+    private final IdentificacaoUsuario identificacao;
     private final AuditoriaService auditoriaService;
 
-    public CarroController(CarroService carroService, ControleAcessoUsuario controleAcesso,
+    public CarroController(CarroService carroService, IdentificacaoUsuario identificacao,
             AuditoriaService auditoriaService) {
         this.carroService = carroService;
-        this.controleAcesso = controleAcesso;
+        this.identificacao = identificacao;
         this.auditoriaService = auditoriaService;
     }
 
     @PostMapping({"", "/salvar"})
     public ResponseEntity<CarroResponse> salvarCarro(@RequestBody CarroRequest request,
-            @RequestHeader(value = ControleAcessoUsuario.HEADER_USUARIO, required = false) Long operadorId) {
-        log.info("Pedido para cadastrar o carro {} {} {}", request.getMarca(), request.getModelo(), request.getAno());
-        Usuario operador = controleAcesso.exigirCargo(operadorId, "cadastrar carros", Cargo.GERENTE);
+            @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
+        String quem = identificacao.exigir(usuarioId, "cadastrar carros");
 
         Carro carro = carroService.save(request);
-        auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, operador.identificacao(), "Cadastrou " + descrever(carro));
+        log.info("{} cadastrou o {}", quem, descrever(carro));
+        auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, quem, "Cadastrou " + descrever(carro));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(carro));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CarroResponse> atualizarCarro(@PathVariable Long id, @RequestBody CarroRequest request,
-            @RequestHeader(value = ControleAcessoUsuario.HEADER_USUARIO, required = false) Long operadorId) {
-        log.info("Pedido para atualizar o carro {}", id);
-        Usuario operador = controleAcesso.exigirCargo(operadorId, "editar carros", Cargo.GERENTE);
+            @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
+        String quem = identificacao.exigir(usuarioId, "editar carros");
 
         Carro carro = carroService.update(request, id);
-        auditoriaService.registrar(AcaoAuditoria.CARRO_ATUALIZADO, operador.identificacao(), "Atualizou " + descrever(carro));
+        log.info("{} atualizou o {}", quem, descrever(carro));
+        auditoriaService.registrar(AcaoAuditoria.CARRO_ATUALIZADO, quem, "Atualizou " + descrever(carro));
         return ResponseEntity.ok(mapToResponse(carro));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarCarro(@PathVariable Long id,
-            @RequestHeader(value = ControleAcessoUsuario.HEADER_USUARIO, required = false) Long operadorId) {
-        log.info("Pedido para excluir o carro {}", id);
-        Usuario operador = controleAcesso.exigirCargo(operadorId, "excluir carros", Cargo.GERENTE);
+            @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
+        String quem = identificacao.exigir(usuarioId, "excluir carros");
 
         carroService.deleteById(id);
-        auditoriaService.registrar(AcaoAuditoria.CARRO_EXCLUIDO, operador.identificacao(), "Excluiu o carro " + id);
+        log.info("{} excluiu o carro {}", quem, id);
+        auditoriaService.registrar(AcaoAuditoria.CARRO_EXCLUIDO, quem, "Excluiu o carro " + id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CarroResponse> pesquisarCarroPorId(@PathVariable Long id) {
+    public ResponseEntity<CarroResponse> pesquisarCarroPorId(@PathVariable Long id,
+            @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
+        String quem = identificacao.identificar(usuarioId);
         Optional<Carro> carro = carroService.findById(id);
         if (carro.isEmpty()) {
-            log.warn("Carro {} nao encontrado", id);
+            log.warn("{} procurou o carro {} que nao existe", quem, id);
+        } else {
+            log.info("{} consultou o carro {}", quem, id);
         }
         return carro.map(c -> ResponseEntity.ok(mapToResponse(c)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<CarroResponse>> pesquisarTodosCarros(@RequestParam(required = false) String marca) {
+    public ResponseEntity<List<CarroResponse>> pesquisarTodosCarros(@RequestParam(required = false) String marca,
+            @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
+        String quem = identificacao.identificar(usuarioId);
         List<Carro> carros = marca == null ? carroService.findAll() : carroService.findByMarca(marca);
-        log.info("Consulta de carros (marca={}) devolveu {} resultado(s)", marca, carros.size());
+        log.info("{} consultou os carros (marca={}) e viu {} resultado(s)", quem, marca, carros.size());
         return ResponseEntity.ok(carros.stream()
                 .map(this::mapToResponse)
                 .toList());
