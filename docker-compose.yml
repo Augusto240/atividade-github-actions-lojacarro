@@ -13,6 +13,36 @@ services:
       timeout: 5s
       retries: 20
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: lojacarro-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-setcookie lojacarro"
+      RABBITMQ_CTL_ERL_ARGS: "-setcookie lojacarro"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  lojacarro-log:
+    build: ../lojacarro-log
+    container_name: lojacarro-log
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      ARQUIVO_OPERACOES: /app/dados/operacoes.log
+    volumes:
+      - ./logs/lojacarro-log:/app/dados
+    restart: unless-stopped
+
   usuarios-api:
     build: ../lojacarro-usuarios-api
     container_name: usuarios-api
@@ -34,6 +64,8 @@ services:
         condition: service_healthy
       usuarios-api:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       SERVER: dev
       BD_NAME: josecarro
@@ -41,6 +73,7 @@ services:
       BD_PASS: root
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/josecarro?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       USUARIOS_API_URL: http://usuarios-api:8081
+      RABBITMQ_HOST: rabbitmq
     ports:
       - "8080:8080"
     volumes:

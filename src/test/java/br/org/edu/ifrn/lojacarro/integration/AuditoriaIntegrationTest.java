@@ -1,6 +1,7 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
+import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
 import br.org.edu.ifrn.lojacarro.model.RegistroAuditoria;
 import br.org.edu.ifrn.lojacarro.repository.RegistroAuditoriaRepository;
@@ -53,6 +54,9 @@ class AuditoriaIntegrationTest {
 
     @MockitoBean
     private UsuarioClient usuarioClient;
+
+    @MockitoBean
+    private Enviar enviar;
 
     @BeforeEach
     void setUp() {

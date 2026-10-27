@@ -4,12 +4,13 @@ API da loja de carros em Spring Boot (Java 17). Cuida dos carros, dos logs e da 
 
 Autor: Jose Augusto
 
-O sistema foi dividido em 3 projetos:
+O sistema foi dividido em 4 projetos:
 
 | Projeto | O que faz | Porta |
 |---------|-----------|-------|
 | lojacarro (este) | CRUD de carros, logs e auditoria | 8080 |
 | lojacarro-usuarios-api | CRUD de usuarios | 8081 |
+| lojacarro-log | Modulo de log, recebe as operacoes pelo RabbitMQ | - |
 | lojacarro-frontend | Telas em Angular | 4200 |
 
 ## Comunicacao com a API de usuarios
@@ -35,16 +36,33 @@ O endereco da API fica em `usuarios.api.url` e pode ser trocado pela variavel `U
 O header `X-Request-Id` e repassado para a API de usuarios, entao a mesma requisicao aparece com o mesmo id no
 log dos dois projetos.
 
+## Mensagens para o modulo de log (RabbitMQ)
+
+Depois de cadastrar, atualizar ou excluir um carro, a LojaCarro manda uma mensagem para a fila `augusto` no
+RabbitMQ. Quem le essa fila e o modulo de log (`lojacarro-log`), que salva a operacao num arquivo.
+
+```
+CARRO_CRIADO;2026-10-27T14:05:30;Maria Oliveira (#2);1;Toyota;Corolla;2024;web-abc123
+```
+
+O envio fica na classe `rabbitmq/Enviar.java`, feita a partir do codigo passado em aula. As configuracoes estao no
+`application.properties` (`rabbitmq.host=10.209.1.53`, usuario e senha `admin`) e o host pode ser trocado pela
+variavel `RABBITMQ_HOST`.
+
+Se o RabbitMQ estiver fora do ar o carro e salvo do mesmo jeito, so fica um erro no log avisando que a mensagem nao
+foi enviada.
+
 ## Como rodar
 
 ### Docker (os 3 projetos)
 
-Os 3 repositorios precisam estar na mesma pasta:
+Os 4 repositorios precisam estar na mesma pasta:
 
 ```
 pasta/
   atividade-github-actions-lojacarro/
   lojacarro-usuarios-api/
+  lojacarro-log/
   lojacarro-frontend/
 ```
 
@@ -57,10 +75,12 @@ docker compose up --build
 - Frontend: http://localhost:4200
 - LojaCarro: http://localhost:8080
 - Usuarios: http://localhost:8081
+- Painel do RabbitMQ: http://localhost:15672 (admin / admin)
+- Operacoes salvas pelo modulo de log: `logs/lojacarro-log/operacoes.log`
 
 ### Sem Docker
 
-Primeiro sobe a API de usuarios (ver o README dela). Depois:
+Primeiro sobe a API de usuarios e o modulo de log (ver o README de cada um). Depois:
 
 ```bash
 ./mvnw clean package
@@ -104,5 +124,6 @@ anterior, e `GET /auditoria/integridade` mostra se algum registro foi alterado o
 ./mvnw clean verify
 ```
 
-Nos testes a API de usuarios e simulada com `@MockitoBean` e `MockRestServiceServer`, entao eles rodam sem ela.
+Nos testes a API de usuarios e o envio para o RabbitMQ sao simulados com `@MockitoBean` e `MockRestServiceServer`,
+entao eles rodam sem nenhum dos dois.
 O JaCoCo exige 80% de cobertura.

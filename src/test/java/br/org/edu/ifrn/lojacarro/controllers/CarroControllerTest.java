@@ -1,6 +1,7 @@
 package br.org.edu.ifrn.lojacarro.controllers;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
+import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.model.Carro;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +22,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,6 +52,9 @@ class CarroControllerTest {
 
     @MockitoBean
     private UsuarioClient usuarioClient;
+
+    @MockitoBean
+    private Enviar enviar;
 
     @BeforeEach
     void setUp() {
@@ -100,6 +107,8 @@ class CarroControllerTest {
                 .andExpect(status().isNoContent());
 
         assertTrue(carroRepository.findById(salvo.getId()).isEmpty());
+        verify(enviar).enviarMensagem(startsWith("CARRO_EXCLUIDO;"));
+        verify(enviar).enviarMensagem(contains(";Gerente Teste (#1);" + salvo.getId() + ";Marca;HB20;2021;"));
     }
 
     @Test

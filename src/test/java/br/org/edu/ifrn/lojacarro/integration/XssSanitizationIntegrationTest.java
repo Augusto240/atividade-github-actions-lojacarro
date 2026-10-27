@@ -1,6 +1,7 @@
 package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
+import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
 import br.org.edu.ifrn.lojacarro.model.Carro;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
@@ -40,6 +41,9 @@ class XssSanitizationIntegrationTest {
 
     @MockitoBean
     private UsuarioClient usuarioClient;
+
+    @MockitoBean
+    private Enviar enviar;
 
     @Autowired
     private CarroRepository carroRepository;
