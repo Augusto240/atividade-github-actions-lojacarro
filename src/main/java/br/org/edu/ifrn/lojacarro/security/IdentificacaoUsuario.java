@@ -25,7 +25,7 @@ public class IdentificacaoUsuario {
         this.auditoriaService = auditoriaService;
     }
 
-    public String exigir(Long usuarioId, String acao) {
+    public UsuarioIdentificado exigir(Long usuarioId, String acao) {
         if (usuarioId == null) {
             log.warn("Tentativa de {} sem o header {}", acao, HEADER_USUARIO);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Header " + HEADER_USUARIO + " não informado");
@@ -39,7 +39,7 @@ public class IdentificacaoUsuario {
         });
 
         MDC.put("usuario", nome);
-        return descrever(nome, usuarioId);
+        return new UsuarioIdentificado(usuarioId, nome);
     }
 
     public String identificar(Long usuarioId) {
@@ -50,16 +50,12 @@ public class IdentificacaoUsuario {
             return usuarioClient.buscarNome(usuarioId)
                     .map(nome -> {
                         MDC.put("usuario", nome);
-                        return descrever(nome, usuarioId);
+                        return new UsuarioIdentificado(usuarioId, nome).descricao();
                     })
                     .orElse("#" + usuarioId + " (inexistente)");
         } catch (ResponseStatusException e) {
             log.warn("Seguindo sem o nome do usuario {} porque a API de usuarios nao respondeu", usuarioId);
             return "#" + usuarioId;
         }
-    }
-
-    private String descrever(String nome, Long id) {
-        return nome + " (#" + id + ")";
     }
 }

@@ -41,13 +41,28 @@ log dos dois projetos.
 Depois de cadastrar, atualizar ou excluir um carro, a LojaCarro manda uma mensagem para a fila `augusto` no
 RabbitMQ. Quem le essa fila e o modulo de log (`lojacarro-log`), que salva a operacao num arquivo.
 
-```
-CARRO_CRIADO;2026-10-27T14:05:30;Maria Oliveira (#2);1;Toyota;Corolla;2024;web-abc123
+A mensagem e o DTO `OperacaoCarroDTO` convertido para JSON:
+
+```json
+{
+  "operacao": "CARRO_CRIADO",
+  "dataHora": "2026-10-27T14:05:30",
+  "usuarioId": 2,
+  "usuarioNome": "Maria Oliveira",
+  "carroId": 1,
+  "marca": "Toyota",
+  "modelo": "Corolla",
+  "ano": 2024,
+  "requestId": "web-abc123"
+}
 ```
 
 O envio fica na classe `rabbitmq/Enviar.java`, feita a partir do codigo passado em aula. As configuracoes estao no
 `application.properties` (`rabbitmq.host=10.209.1.53`, usuario e senha `admin`) e o host pode ser trocado pela
 variavel `RABBITMQ_HOST`.
+
+O `10.209.1.53` so funciona com a maquina na rede cabeada do laboratorio. Fora de la da pra usar o RabbitMQ do
+`docker compose` (ele ja aponta tudo para o RabbitMQ local).
 
 Se o RabbitMQ estiver fora do ar o carro e salvo do mesmo jeito, so fica um erro no log avisando que a mensagem nao
 foi enviada.

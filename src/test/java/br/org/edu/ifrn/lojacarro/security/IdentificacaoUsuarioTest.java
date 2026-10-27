@@ -64,7 +64,11 @@ class IdentificacaoUsuarioTest {
     void exigirDevolveNomeEColocaNoMdc() {
         when(usuarioClient.buscarNome(2L)).thenReturn(Optional.of("Maria"));
 
-        assertEquals("Maria (#2)", identificacao.exigir(2L, "cadastrar carros"));
+        UsuarioIdentificado usuario = identificacao.exigir(2L, "cadastrar carros");
+
+        assertEquals(2L, usuario.id());
+        assertEquals("Maria", usuario.nome());
+        assertEquals("Maria (#2)", usuario.descricao());
         assertEquals("Maria", MDC.get("usuario"));
     }
 

@@ -2,11 +2,13 @@ package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
+import br.org.edu.ifrn.lojacarro.dto.OperacaoCarroDTO;
 import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.repository.RegistroAuditoriaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,9 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -82,7 +82,7 @@ class SecurityAccessIntegrationTest {
         mockMvc.perform(cadastrarUno().header("X-Usuario-Id", 99))
                 .andExpect(status().isUnauthorized());
 
-        verify(enviar, never()).enviarMensagem(anyString());
+        verify(enviar, never()).enviarMensagem(any(OperacaoCarroDTO.class));
 
         assertThat(auditoriaRepository.findTopByOrderByIdDesc().orElseThrow().getAcao()).isEqualTo("ACESSO_NEGADO");
     }
@@ -108,9 +108,14 @@ class SecurityAccessIntegrationTest {
                 .contains("[Maria]")
                 .contains("Maria (#2) cadastrou o carro #");
         assertThat(auditoriaRepository.findTopByOrderByIdDesc().orElseThrow().getResponsavel()).isEqualTo("Maria (#2)");
-        verify(enviar).enviarMensagem(startsWith("CARRO_CRIADO;"));
-        verify(enviar).enviarMensagem(contains(";Maria (#2);"));
-        verify(enviar).enviarMensagem(contains(";Fiat;Uno;2015;"));
+        ArgumentCaptor<OperacaoCarroDTO> enviado = ArgumentCaptor.forClass(OperacaoCarroDTO.class);
+        verify(enviar).enviarMensagem(enviado.capture());
+        assertThat(enviado.getValue().operacao()).isEqualTo("CARRO_CRIADO");
+        assertThat(enviado.getValue().usuarioId()).isEqualTo(2L);
+        assertThat(enviado.getValue().usuarioNome()).isEqualTo("Maria");
+        assertThat(enviado.getValue().marca()).isEqualTo("Fiat");
+        assertThat(enviado.getValue().modelo()).isEqualTo("Uno");
+        assertThat(enviado.getValue().ano()).isEqualTo(2015);
     }
 
     @Test

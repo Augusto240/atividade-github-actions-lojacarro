@@ -2,10 +2,12 @@ package br.org.edu.ifrn.lojacarro.controllers;
 
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
 import br.org.edu.ifrn.lojacarro.dto.CarroResponse;
+import br.org.edu.ifrn.lojacarro.dto.OperacaoCarroDTO;
 import br.org.edu.ifrn.lojacarro.model.AcaoAuditoria;
 import br.org.edu.ifrn.lojacarro.model.Carro;
 import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.security.IdentificacaoUsuario;
+import br.org.edu.ifrn.lojacarro.security.UsuarioIdentificado;
 import br.org.edu.ifrn.lojacarro.services.AuditoriaService;
 import br.org.edu.ifrn.lojacarro.services.CarroService;
 import org.slf4j.Logger;
@@ -41,31 +43,31 @@ public class CarroController {
     @PostMapping({"", "/salvar"})
     public ResponseEntity<CarroResponse> salvarCarro(@RequestBody CarroRequest request,
             @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
-        String quem = identificacao.exigir(usuarioId, "cadastrar carros");
+        UsuarioIdentificado usuario = identificacao.exigir(usuarioId, "cadastrar carros");
 
         Carro carro = carroService.save(request);
-        log.info("{} cadastrou o {}", quem, descrever(carro));
-        auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, quem, "Cadastrou " + descrever(carro));
-        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_CRIADO, quem, carro));
+        log.info("{} cadastrou o {}", usuario.descricao(), descrever(carro));
+        auditoriaService.registrar(AcaoAuditoria.CARRO_CRIADO, usuario.descricao(), "Cadastrou " + descrever(carro));
+        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_CRIADO, usuario, carro));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(carro));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CarroResponse> atualizarCarro(@PathVariable Long id, @RequestBody CarroRequest request,
             @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
-        String quem = identificacao.exigir(usuarioId, "editar carros");
+        UsuarioIdentificado usuario = identificacao.exigir(usuarioId, "editar carros");
 
         Carro carro = carroService.update(request, id);
-        log.info("{} atualizou o {}", quem, descrever(carro));
-        auditoriaService.registrar(AcaoAuditoria.CARRO_ATUALIZADO, quem, "Atualizou " + descrever(carro));
-        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_ATUALIZADO, quem, carro));
+        log.info("{} atualizou o {}", usuario.descricao(), descrever(carro));
+        auditoriaService.registrar(AcaoAuditoria.CARRO_ATUALIZADO, usuario.descricao(), "Atualizou " + descrever(carro));
+        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_ATUALIZADO, usuario, carro));
         return ResponseEntity.ok(mapToResponse(carro));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarCarro(@PathVariable Long id,
             @RequestHeader(value = IdentificacaoUsuario.HEADER_USUARIO, required = false) Long usuarioId) {
-        String quem = identificacao.exigir(usuarioId, "excluir carros");
+        UsuarioIdentificado usuario = identificacao.exigir(usuarioId, "excluir carros");
         Carro excluido = carroService.findById(id).orElseGet(() -> {
             Carro vazio = new Carro("-", "-", 0);
             vazio.setId(id);
@@ -73,9 +75,9 @@ public class CarroController {
         });
 
         carroService.deleteById(id);
-        log.info("{} excluiu o carro {}", quem, id);
-        auditoriaService.registrar(AcaoAuditoria.CARRO_EXCLUIDO, quem, "Excluiu o carro " + id);
-        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_EXCLUIDO, quem, excluido));
+        log.info("{} excluiu o carro {}", usuario.descricao(), id);
+        auditoriaService.registrar(AcaoAuditoria.CARRO_EXCLUIDO, usuario.descricao(), "Excluiu o carro " + id);
+        enviar.enviarMensagem(mensagem(AcaoAuditoria.CARRO_EXCLUIDO, usuario, excluido));
         return ResponseEntity.noContent().build();
     }
 
@@ -108,14 +110,9 @@ public class CarroController {
         return new CarroResponse(carro.getId(), carro.getMarca(), carro.getModelo(), carro.getAno());
     }
 
-    private String mensagem(AcaoAuditoria acao, String quem, Carro carro) {
-        return String.join(";", acao.name(), LocalDateTime.now().withNano(0).toString(), limpar(quem),
-                String.valueOf(carro.getId()), limpar(carro.getMarca()), limpar(carro.getModelo()),
-                String.valueOf(carro.getAno()), String.valueOf(MDC.get("requestId")));
-    }
-
-    private String limpar(String texto) {
-        return texto.replace(";", ",");
+    private OperacaoCarroDTO mensagem(AcaoAuditoria acao, UsuarioIdentificado usuario, Carro carro) {
+        return new OperacaoCarroDTO(acao.name(), LocalDateTime.now().withNano(0), usuario.id(), usuario.nome(),
+                carro.getId(), carro.getMarca(), carro.getModelo(), carro.getAno(), MDC.get("requestId"));
     }
 
     private String descrever(Carro carro) {
