@@ -37,7 +37,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
       ARQUIVO_OPERACOES: /app/dados/operacoes.log
     volumes:
       - ./logs/lojacarro-log:/app/dados
@@ -73,7 +73,7 @@ services:
       BD_PASS: root
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/josecarro?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       USUARIOS_API_URL: http://usuarios-api:8081
-      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
     ports:
       - "8080:8080"
     volumes:

@@ -55,6 +55,12 @@ docker compose up --build
 O front abre em http://localhost:4200 e o painel do RabbitMQ em http://localhost:15672 (admin / admin). O que o
 modulo de log salvou fica em `logs/lojacarro-log/operacoes.log`.
 
+Para usar o RabbitMQ do laboratorio em vez do local:
+
+```
+RABBITMQ_HOST=10.209.1.53 docker compose up --build
+```
+
 Sem Docker precisa subir antes a API de usuarios e o RabbitMQ. Depois:
 
 ```
