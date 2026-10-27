@@ -1,47 +1,28 @@
-# LojaCarro - API
+# LojaCarro
 
-API da loja de carros em Spring Boot (Java 17). Cuida dos carros, dos logs e da auditoria.
+API da loja de carros que venho fazendo na disciplina. Spring Boot com Java 17.
 
 Autor: Jose Augusto
 
-O sistema foi dividido em 4 projetos:
+O projeto acabou ficando dividido em 4 repositorios:
 
-| Projeto | O que faz | Porta |
-|---------|-----------|-------|
-| lojacarro (este) | CRUD de carros, logs e auditoria | 8080 |
-| lojacarro-usuarios-api | CRUD de usuarios | 8081 |
-| lojacarro-log | Modulo de log, recebe as operacoes pelo RabbitMQ | - |
-| lojacarro-frontend | Telas em Angular | 4200 |
+- lojacarro (este): CRUD de carros, logs e auditoria
+- lojacarro-usuarios-api: CRUD de usuarios
+- lojacarro-log: modulo de log, recebe as operacoes dos carros pelo RabbitMQ
+- lojacarro-frontend: as telas em Angular
 
-## Comunicacao com a API de usuarios
+## Usuarios
 
-A LojaCarro nao tem mais usuarios. Toda operacao com carro recebe o id do usuario no header `X-Usuario-Id`,
-a LojaCarro chama a API de usuarios em `GET /usuarios/{id}/nome` e grava o nome que voltou no log e na auditoria.
+A LojaCarro nao guarda mais usuario nenhum. Quem mexe nos carros manda o proprio id no header `X-Usuario-Id`, a
+LojaCarro pergunta o nome para a API de usuarios (`GET /usuarios/{id}/nome`) e usa esse nome no log e na auditoria.
 
-```
-POST /carro/salvar  (X-Usuario-Id: 2)
-   -> GET http://localhost:8081/usuarios/2/nome
-   <- {"nome": "Maria Oliveira"}
-log: "Maria Oliveira (#2) cadastrou o carro #1 Toyota Corolla 2024"
-```
+Para cadastrar, editar ou excluir carro o header e obrigatorio. Se a API de usuarios estiver fora do ar essas tres
+operacoes dao 503, porque sem o nome nao tem como registrar quem fez. Listar carros funciona mesmo assim.
 
-- cadastrar, editar e excluir carro: precisa do header. Usuario que nao existe recebe 401
-- consultar carros: o header e opcional, se vier o nome tambem vai pro log
-- se a API de usuarios estiver fora do ar: cadastro, edicao e exclusao devolvem 503 (sem o nome nao da pra
-  registrar quem fez). A consulta continua funcionando e o log fica so com o id
+## RabbitMQ
 
-A chamada usa `RestClient` com timeout de 2s para conectar e 3s para responder (`application.properties`).
-O endereco da API fica em `usuarios.api.url` e pode ser trocado pela variavel `USUARIOS_API_URL`.
-
-O header `X-Request-Id` e repassado para a API de usuarios, entao a mesma requisicao aparece com o mesmo id no
-log dos dois projetos.
-
-## Mensagens para o modulo de log (RabbitMQ)
-
-Depois de cadastrar, atualizar ou excluir um carro, a LojaCarro manda uma mensagem para a fila `augusto` no
-RabbitMQ. Quem le essa fila e o modulo de log (`lojacarro-log`), que salva a operacao num arquivo.
-
-A mensagem e o DTO `OperacaoCarroDTO` convertido para JSON:
+Sempre que um carro e cadastrado, atualizado ou excluido a LojaCarro manda um `OperacaoCarroDTO` em JSON para a fila
+`augusto`. Quem le essa fila e o lojacarro-log. A mensagem fica assim:
 
 ```json
 {
@@ -57,88 +38,55 @@ A mensagem e o DTO `OperacaoCarroDTO` convertido para JSON:
 }
 ```
 
-O envio fica na classe `rabbitmq/Enviar.java`, feita a partir do codigo passado em aula. As configuracoes estao no
-`application.properties` (`rabbitmq.host=10.209.1.53`, usuario e senha `admin`) e o host pode ser trocado pela
-variavel `RABBITMQ_HOST`.
+O envio esta no `rabbitmq/Enviar.java`, que fiz em cima do codigo passado em aula. O RabbitMQ configurado e o do
+laboratorio (10.209.1.53, usuario e senha admin), so que esse IP so funciona na rede cabeada. Fora de la eu uso o
+RabbitMQ do docker compose, ou passo outro endereco na variavel `RABBITMQ_HOST`.
 
-O `10.209.1.53` so funciona com a maquina na rede cabeada do laboratorio. Fora de la da pra usar o RabbitMQ do
-`docker compose` (ele ja aponta tudo para o RabbitMQ local).
+Se o RabbitMQ cair o carro e salvo do mesmo jeito, so fica um erro no log dizendo que a mensagem nao foi.
 
-Se o RabbitMQ estiver fora do ar o carro e salvo do mesmo jeito, so fica um erro no log avisando que a mensagem nao
-foi enviada.
+## Rodando
 
-## Como rodar
-
-### Docker (os 3 projetos)
-
-Os 4 repositorios precisam estar na mesma pasta:
+O jeito mais facil e com Docker. Os 4 repositorios precisam estar na mesma pasta, e dai e so rodar aqui dentro:
 
 ```
-pasta/
-  atividade-github-actions-lojacarro/
-  lojacarro-usuarios-api/
-  lojacarro-log/
-  lojacarro-frontend/
-```
-
-Dentro desta pasta:
-
-```bash
 docker compose up --build
 ```
 
-- Frontend: http://localhost:4200
-- LojaCarro: http://localhost:8080
-- Usuarios: http://localhost:8081
-- Painel do RabbitMQ: http://localhost:15672 (admin / admin)
-- Operacoes salvas pelo modulo de log: `logs/lojacarro-log/operacoes.log`
+O front abre em http://localhost:4200 e o painel do RabbitMQ em http://localhost:15672 (admin / admin). O que o
+modulo de log salvou fica em `logs/lojacarro-log/operacoes.log`.
 
-### Sem Docker
+Sem Docker precisa subir antes a API de usuarios e o RabbitMQ. Depois:
 
-Primeiro sobe a API de usuarios e o modulo de log (ver o README de cada um). Depois:
-
-```bash
+```
 ./mvnw clean package
 SERVER=dev BD_NAME=josecarro BD_USER=root BD_PASS=root java -jar target/augusto.war
 ```
 
-O perfil vem da variavel `SERVER`:
+A variavel `SERVER` escolhe o perfil. No `dev` o banco vem de `BD_NAME`, `BD_USER` e `BD_PASS`. No `prod` e o banco
+`carros` com o usuario `augusto`.
 
-- `dev`: usa as variaveis `BD_NAME`, `BD_USER` e `BD_PASS`
-- `prod`: usa o banco `carros` com o usuario `augusto`
+## Rotas
 
-## Logs
+- `GET /carro` e `GET /carro/{id}`
+- `POST /carro/salvar`, `PUT /carro/{id}` e `DELETE /carro/{id}` (precisam do `X-Usuario-Id`)
+- `GET /auditoria` e `GET /auditoria/integridade` (precisam do `X-Usuario-Id`)
+- `POST /logs` (o front manda os erros dele para ca)
+- `GET /boas-vindas`
 
-Cada requisicao recebe um id (`X-Request-Id`) que aparece em todas as linhas de log dela, junto com o nome do
-usuario. Arquivos na pasta `logs/`:
+## Logs e auditoria
 
-- `lojacarro.log`: log geral
-- `erros.log`: so os erros
-- `auditoria.log`: copia da auditoria
-- `lojacarro.json`: so no perfil prod, em JSON
+Cada requisicao ganha um id (`X-Request-Id`) que aparece em todas as linhas de log dela. Esse mesmo id vai junto
+para a API de usuarios e dentro da mensagem do RabbitMQ, entao da pra seguir uma operacao pelos tres projetos. Os
+arquivos ficam na pasta `logs/`.
 
-## Auditoria (WORM)
-
-As operacoes com carros ficam na tabela `auditoria`, que so recebe insert. Cada registro guarda o hash do
-anterior, e `GET /auditoria/integridade` mostra se algum registro foi alterado ou apagado direto no banco.
-
-## Endpoints
-
-| Metodo | Rota | Header X-Usuario-Id |
-|--------|------|---------------------|
-| GET | `/carro`, `/carro/{id}` | opcional |
-| POST | `/carro/salvar` | obrigatorio |
-| PUT, DELETE | `/carro/{id}` | obrigatorio |
-| GET | `/auditoria`, `/auditoria/integridade` | obrigatorio |
-| POST | `/logs` | - |
-| GET | `/boas-vindas` | - |
+As operacoes com carro tambem ficam na tabela `auditoria`, que so recebe insert. Cada registro guarda o hash do
+anterior, entao o `GET /auditoria/integridade` mostra se alguem alterou ou apagou alguma coisa direto no banco.
 
 ## Testes
 
-```bash
+```
 ./mvnw clean verify
 ```
 
-Nos testes a API de usuarios e o envio para o RabbitMQ sao simulados com `@MockitoBean` e `MockRestServiceServer`,
-entao eles rodam sem nenhum dos dois.
-O JaCoCo exige 80% de cobertura.
+Nos testes a API de usuarios e o RabbitMQ sao simulados, entao rodam sem precisar de nenhum dos dois. O JaCoCo
+cobra no minimo 80% de cobertura.
