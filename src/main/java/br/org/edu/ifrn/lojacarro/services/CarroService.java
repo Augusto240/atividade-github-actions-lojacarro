@@ -46,6 +46,13 @@ public class CarroService {
         return save(new CarroRequest(carro.getMarca(), carro.getModelo(), carro.getAno()));
     }
 
+    public void verificarExiste(Long carroId) {
+        if (carroId == null || !carroRepository.existsById(carroId)) {
+            log.warn("Carro {} nao existe", carroId);
+            throw new InputValidator.ValidationException("Carro " + carroId + " não existe", 400);
+        }
+    }
+
     public void deleteById(Long id) {
         carroRepository.deleteById(id);
         log.info("Carro {} excluido", id);

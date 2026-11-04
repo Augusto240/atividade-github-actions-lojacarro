@@ -2,14 +2,13 @@ package br.org.edu.ifrn.lojacarro.dto;
 
 import java.time.LocalDateTime;
 
-public record OperacaoCarroDTO(
+public record LogOperacaoDTO(
+        String modulo,
         String operacao,
         LocalDateTime dataHora,
         Long usuarioId,
         String usuarioNome,
-        Long carroId,
-        String marca,
-        String modelo,
-        int ano,
+        Long registroId,
+        String descricao,
         String requestId) {
 }

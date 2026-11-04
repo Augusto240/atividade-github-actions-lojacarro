@@ -2,7 +2,7 @@ package br.org.edu.ifrn.lojacarro.integration;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
 import br.org.edu.ifrn.lojacarro.dto.CarroRequest;
-import br.org.edu.ifrn.lojacarro.dto.OperacaoCarroDTO;
+import br.org.edu.ifrn.lojacarro.dto.LogOperacaoDTO;
 import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.repository.RegistroAuditoriaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,7 +82,7 @@ class SecurityAccessIntegrationTest {
         mockMvc.perform(cadastrarUno().header("X-Usuario-Id", 99))
                 .andExpect(status().isUnauthorized());
 
-        verify(enviar, never()).enviarMensagem(any(OperacaoCarroDTO.class));
+        verify(enviar, never()).enviarMensagem(any(LogOperacaoDTO.class));
 
         assertThat(auditoriaRepository.findTopByOrderByIdDesc().orElseThrow().getAcao()).isEqualTo("ACESSO_NEGADO");
     }
@@ -108,14 +108,13 @@ class SecurityAccessIntegrationTest {
                 .contains("[Maria]")
                 .contains("Maria (#2) cadastrou o carro #");
         assertThat(auditoriaRepository.findTopByOrderByIdDesc().orElseThrow().getResponsavel()).isEqualTo("Maria (#2)");
-        ArgumentCaptor<OperacaoCarroDTO> enviado = ArgumentCaptor.forClass(OperacaoCarroDTO.class);
+        ArgumentCaptor<LogOperacaoDTO> enviado = ArgumentCaptor.forClass(LogOperacaoDTO.class);
         verify(enviar).enviarMensagem(enviado.capture());
         assertThat(enviado.getValue().operacao()).isEqualTo("CARRO_CRIADO");
         assertThat(enviado.getValue().usuarioId()).isEqualTo(2L);
         assertThat(enviado.getValue().usuarioNome()).isEqualTo("Maria");
-        assertThat(enviado.getValue().marca()).isEqualTo("Fiat");
-        assertThat(enviado.getValue().modelo()).isEqualTo("Uno");
-        assertThat(enviado.getValue().ano()).isEqualTo(2015);
+        assertThat(enviado.getValue().modulo()).isEqualTo("CARRO");
+        assertThat(enviado.getValue().descricao()).contains("Fiat Uno 2015");
     }
 
     @Test

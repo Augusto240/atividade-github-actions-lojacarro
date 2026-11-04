@@ -17,8 +17,8 @@ services:
     image: rabbitmq:3.13-management
     container_name: lojacarro-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: aluno
+      RABBITMQ_DEFAULT_PASS: senha-local
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-setcookie lojacarro"
       RABBITMQ_CTL_ERL_ARGS: "-setcookie lojacarro"
     ports:
@@ -38,6 +38,7 @@ services:
         condition: service_healthy
     environment:
       RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_SENHA: ${RABBITMQ_SENHA:-senha-local}
       ARQUIVO_OPERACOES: /app/dados/operacoes.log
     volumes:
       - ./logs/lojacarro-log:/app/dados
@@ -49,8 +50,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usuarios?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_SENHA: ${RABBITMQ_SENHA:-senha-local}
     ports:
       - "8081:8081"
     volumes:
@@ -74,6 +79,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/josecarro?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       USUARIOS_API_URL: http://usuarios-api:8081
       RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_SENHA: ${RABBITMQ_SENHA:-senha-local}
     ports:
       - "8080:8080"
     volumes:

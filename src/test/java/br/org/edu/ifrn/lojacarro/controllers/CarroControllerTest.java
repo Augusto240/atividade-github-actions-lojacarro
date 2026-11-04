@@ -1,7 +1,7 @@
 package br.org.edu.ifrn.lojacarro.controllers;
 
 import br.org.edu.ifrn.lojacarro.cliente.UsuarioClient;
-import br.org.edu.ifrn.lojacarro.dto.OperacaoCarroDTO;
+import br.org.edu.ifrn.lojacarro.dto.LogOperacaoDTO;
 import br.org.edu.ifrn.lojacarro.rabbitmq.Enviar;
 import br.org.edu.ifrn.lojacarro.model.Carro;
 import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
@@ -107,13 +107,13 @@ class CarroControllerTest {
                 .andExpect(status().isNoContent());
 
         assertTrue(carroRepository.findById(salvo.getId()).isEmpty());
-        ArgumentCaptor<OperacaoCarroDTO> enviado = ArgumentCaptor.forClass(OperacaoCarroDTO.class);
+        ArgumentCaptor<LogOperacaoDTO> enviado = ArgumentCaptor.forClass(LogOperacaoDTO.class);
         verify(enviar).enviarMensagem(enviado.capture());
         assertEquals("CARRO_EXCLUIDO", enviado.getValue().operacao());
         assertEquals("Gerente Teste", enviado.getValue().usuarioNome());
-        assertEquals(salvo.getId(), enviado.getValue().carroId());
-        assertEquals("HB20", enviado.getValue().modelo());
-        assertEquals(2021, enviado.getValue().ano());
+        assertEquals("CARRO", enviado.getValue().modulo());
+        assertEquals(salvo.getId(), enviado.getValue().registroId());
+        assertTrue(enviado.getValue().descricao().contains("HB20 2021"));
     }
 
     @Test

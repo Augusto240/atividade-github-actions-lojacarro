@@ -1,6 +1,6 @@
 package br.org.edu.ifrn.lojacarro.rabbitmq;
 
-import br.org.edu.ifrn.lojacarro.dto.OperacaoCarroDTO;
+import br.org.edu.ifrn.lojacarro.dto.LogOperacaoDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
@@ -23,24 +23,17 @@ public class Enviar {
             .contentEncoding("UTF-8")
             .build();
 
-    private final ConnectionFactory factory = new ConnectionFactory();
+    private final ConnectionFactory factory;
     private final ObjectMapper objectMapper;
     private final String fila;
 
-    public Enviar(ObjectMapper objectMapper, @Value("${rabbitmq.host}") String host,
-            @Value("${rabbitmq.porta}") int porta, @Value("${rabbitmq.usuario}") String usuario,
-            @Value("${rabbitmq.senha}") String senha, @Value("${rabbitmq.fila}") String fila) {
+    public Enviar(ConnectionFactory factory, ObjectMapper objectMapper, @Value("${rabbitmq.fila}") String fila) {
+        this.factory = factory;
         this.objectMapper = objectMapper;
-        factory.setHost(host);
-        factory.setPort(porta);
-        factory.setUsername(usuario);
-        factory.setPassword(senha);
-        factory.setConnectionTimeout(2000);
         this.fila = fila;
-        log.info("RabbitMQ configurado em {}:{} na fila {}", host, porta, fila);
     }
 
-    public void enviarMensagem(OperacaoCarroDTO operacao) {
+    public void enviarMensagem(LogOperacaoDTO operacao) {
         try {
             enviarMensagem(objectMapper.writeValueAsString(operacao), fila);
         } catch (JsonProcessingException e) {
